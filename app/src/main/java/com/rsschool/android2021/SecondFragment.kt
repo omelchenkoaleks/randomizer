@@ -1,5 +1,6 @@
 package com.rsschool.android2021
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,8 +11,32 @@ import androidx.fragment.app.Fragment
 
 class SecondFragment : Fragment() {
 
+    interface OnResultPassListener {
+        fun openFirstFragment(previousNumber: Int)
+    }
+
+    private var onResultPassListener: OnResultPassListener? = null
+
     private var backButton: Button? = null
     private var result: TextView? = null
+    private var previousResult = 0
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        try {
+             onResultPassListener = context as OnResultPassListener
+        } catch (e: ClassCastException) {
+            throw ClassCastException(
+                context.toString()
+                        + " должен реализовывать интерфейс OnResultPassListener"
+            )
+        }
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        onResultPassListener = null
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -28,17 +53,17 @@ class SecondFragment : Fragment() {
 
         val min = arguments?.getInt(MIN_VALUE_KEY) ?: 0
         val max = arguments?.getInt(MAX_VALUE_KEY) ?: 0
-
-        result?.text = generate(min, max).toString()
+        previousResult = generate(min, max)
+        result?.text = previousResult.toString()
 
         backButton?.setOnClickListener {
-            // TODO: implement back
+            activity?.onBackPressed()
+            onResultPassListener?.openFirstFragment(previousResult)
         }
     }
 
     private fun generate(min: Int, max: Int): Int {
-        // TODO: generate random number
-        return 0
+        return (min..max).random()
     }
 
     companion object {
@@ -47,8 +72,9 @@ class SecondFragment : Fragment() {
         fun newInstance(min: Int, max: Int): SecondFragment {
             val fragment = SecondFragment()
             val args = Bundle()
-
-            // TODO: implement adding arguments
+            args.putInt(MIN_VALUE_KEY, min)
+            args.putInt(MAX_VALUE_KEY, max)
+            fragment.arguments = args
 
             return fragment
         }
